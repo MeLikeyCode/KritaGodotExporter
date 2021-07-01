@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=godot_exporter
+X-Python-2-Compatible=false
+X-Krita-Manual=godot_exporter_manual.html
+Name=Godot Exporter
+Comment=Automatically generates .png files from (paint) layers when a "Godot .kra" (a .kra with a layer called "godot") file is saved.
