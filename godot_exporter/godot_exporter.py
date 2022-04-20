@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import re
 
+
 from krita import *
 from PyQt5.QtCore import pyqtSlot
 
@@ -37,6 +38,30 @@ def getOptionsFromLayerName(layerName):
 
     return results
 
+def getJustNameFromLayerName(layerName):
+    """Given the full layer name (including any options), returns the name without the options. 
+    For example, a layer with full name "bush {path=/scenes/foilage}" will return "bush". """
+    brace = layerName.find('{')
+    if brace == -1:
+        return layerName.strip()
+    else:
+        return layerName[:brace].strip()
+
+def getGodotProjectPath(path):
+    """Given a path (to a file or folder), traverses up until a project.godot file is found, then returns the full path of the directory that contains this file.
+    In other words, returns the "encompassing" godot project folder path of a given path.
+    Returns None if the path isn't in a godot project.
+    """
+    # base case
+    for item in os.listdir(os.path.dirname(path)):
+        if item == "project.godot":
+            return os.path.dirname(path)
+    # recursive case
+    if os.path.dirname(path) != path:
+        return getGodotProjectPath(os.path.dirname(path))
+    return None
+
+
 @pyqtSlot(str)
 def onImageSaved(filename):
     """Executed when an image (any image) has been saved.
@@ -44,8 +69,9 @@ def onImageSaved(filename):
     What we do: If the document has a layer called "godot", we create a .png image from each one of its paint layers (excluding the one called "godot").
     """
     document = Krita.instance().activeDocument()
+    project_root = getGodotProjectPath(filename)
 
-    with open(f"{tempfile.gettempdir()}/godot_exporter_log.txt","at") as log:
+    with open(f"{tempfile.gettempdir()}/godot_exporter_log.txt","wt") as log:
         # if there is at least one layer with name "godot" in the image
         layers = getNodesRecursive(document.rootNode())
         if any(filter(lambda v : v.name().lower().strip() == 'godot' ,layers)):
@@ -64,10 +90,15 @@ def onImageSaved(filename):
 
             # generate new images from layers
             for layer in layers:
-                options = getOptionsFromLayerName(layer.name())
-                if layer.name().lower().strip() != 'godot' and layer.type() == 'paintlayer':
-                    if "noexport" not in options:
-                        filename = os.path.join(folder_path,f'{layer.name()}.png')
+                layerName = getJustNameFromLayerName(layer.name())
+                layerOptions = getOptionsFromLayerName(layer.name())
+                if layerName.lower() != 'godot' and layer.type() == 'paintlayer':
+                    if "noexport" not in layerOptions: # a layer with {noexport=true} will not be saved as png
+                        if "path" in layerOptions:
+                            filename = os.path.join(project_root,layerOptions["path"],f'{layerName}.png')
+                        else:
+                            filename = os.path.join(folder_path,f'{layerName}.png')
+                        log.write(f'{filename}\n')
                         infoObj = InfoObject()
                         infoObj.setProperty('alpha',True)
                         infoObj.setProperty('compression',5)
