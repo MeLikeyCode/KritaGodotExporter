@@ -72,42 +72,65 @@ def onImageSaved(filename):
     project_root = getGodotProjectPath(filename)
 
     with open(f"{tempfile.gettempdir()}/godot_exporter_log.txt","wt") as log:
-        # if there is at least one layer with name "godot" in the image
+        log.write("fresh log file opened\n")
+        # if there isn't a layer with name "godot" in the image, don't do anything
         layers = getNodesRecursive(document.rootNode())
-        if any(filter(lambda v : v.name().lower().strip() == 'godot' ,layers)):
-            # generate images from layers
+        godot_layer = None
+        for layer in layers:
+            layer_name = getJustNameFromLayerName(layer.name())
+            if layer_name == "godot":
+                godot_layer = layer
+        if godot_layer is None:
+            log.write("no godot layer found\n")
+            return
 
-            Krita.instance().setBatchmode(True)
+        # get options in godot layer
+        godot_layer_options = getOptionsFromLayerName(godot_layer.name())
+        nofolder = False
+        if ("nofolder" in godot_layer_options) and (godot_layer_options["nofolder"] == "true"):
+            log.write("nofolder option detected in godot layer\n")
+            nofolder = True
 
-            # filename is something like .../Player/player.kra
-            basename = os.path.basename(filename) # e.g. player.kra
-            basename_no_ext = basename[:basename.rfind('.')] # e.g. player
-            folder_path = os.path.join(os.path.dirname(filename),basename_no_ext) # e.g. .../Player/player
+        # generate images from layers
 
-            # clear previous images
+        Krita.instance().setBatchmode(True)
+
+        # filename is something like .../Player/player.kra
+        basename = os.path.basename(filename) # e.g. player.kra
+        basename_no_ext = basename[:basename.rfind('.')] # e.g. player
+        folder_path = os.path.join(os.path.dirname(filename),basename_no_ext) # e.g. .../Player/player
+        base_folder_path = os.path.dirname(filename)
+
+        # clear previous images
+        if not nofolder:
+            log.write("clearing previous folder (if it exists) and creating a new one\n")
             shutil.rmtree(folder_path,ignore_errors=True)
             os.mkdir(folder_path)
 
-            # generate new images from layers
-            for layer in layers:
-                layerName = getJustNameFromLayerName(layer.name())
-                layerOptions = getOptionsFromLayerName(layer.name())
-                if layerName.lower() != 'godot' and layer.type() == 'paintlayer':
-                    if "noexport" not in layerOptions: # a layer with {noexport=true} will not be saved as png
-                        if "path" in layerOptions:
-                            filename = os.path.join(project_root,layerOptions["path"],f'{layerName}.png')
-                        else:
-                            filename = os.path.join(folder_path,f'{layerName}.png')
-                        log.write(f'{filename}\n')
-                        infoObj = InfoObject()
-                        infoObj.setProperty('alpha',True)
-                        infoObj.setProperty('compression',5)
-                        infoObj.setProperty('forceSRGB',False)
-                        infoObj.setProperty('indexed',False)
-                        infoObj.setProperty('interlaced',False)
-                        infoObj.setProperty('saveSRGBProfile',True)
-                        infoObj.setProperty('transparencyFillcolor',[255,255,255])
-                        layer.save(filename,1,1,infoObj)
+        # generate new images from layers
+        for layer in layers:
+            layerName = getJustNameFromLayerName(layer.name())
+            layerOptions = getOptionsFromLayerName(layer.name())
+            if layerName.lower() != 'godot' and layer.type() == 'paintlayer':
+                log.write(f"processing layer {layer.name()}\n")
+                if "noexport" not in layerOptions: # a layer with {noexport=true} will not be saved as png
+                    if "path" in layerOptions:
+                        filename = os.path.join(project_root,layerOptions["path"],f'{layerName}.png')
+                    elif nofolder:
+                        filename = os.path.join(base_folder_path,f'{layerName}.png')
+                    else:
+                        filename = os.path.join(folder_path,f'{layerName}.png')
+
+                    log.write(f'saving {filename}\n')
+                    infoObj = InfoObject()
+                    infoObj.setProperty('alpha',True)
+                    infoObj.setProperty('compression',5)
+                    infoObj.setProperty('forceSRGB',False)
+                    infoObj.setProperty('indexed',False)
+                    infoObj.setProperty('interlaced',False)
+                    infoObj.setProperty('saveSRGBProfile',True)
+                    infoObj.setProperty('transparencyFillcolor',[255,255,255])
+                    layer.save(filename,1,1,infoObj)
     
     Krita.instance().setBatchmode(False)
 
