@@ -1,5 +1,28 @@
-<html>
-    <body>
-        <p>If your image has a layer called "godot", when you save your image, .png files will be created from each layer in your image (excluding the one called "godot"). The .png files are located in a folder that is placed in the same place that your saved .kra file is at. The .png files have the same names as their respective layer.</p>
-    </body>
-</html>
+<h1 id="krita-godot-exporter">Krita Godot Exporter</h1>
+<p>A Krita plugin that makes exporting images drawn/edited in krita to a
+Godot project as automated as possible.</p>
+<p>If your Krita image has a layer called “godot”, when you save the
+image, png files will be created from each layer (except the layer
+called “godot”). The png files are placed in a folder besides the .kra
+file. The .png files have the same name as the respective layer.</p>
+<p>You can add options in the layer name, inside curly braces, the
+syntax is like so:
+<code>layerName {option1=value1,option2=value2,option3=value3}</code></p>
+<p>The following options are supported at this time: -
+<code>path=&lt;path&gt;</code> specifies the folder to save the layer
+to. Path is relative to the godot project folder that encompasses the
+.kra file. By default (i.e. if the path option isn’t specified), layers
+are saved in a folder that is placed besides the .kra file. With this
+option, you can specifically choose a folder (relative to the godot
+project) to save the layer to. - example:
+<code>player {path=Scenes/Characters}</code>, will make the layer save
+to <code>&lt;GodotProject&gt;/Scenes/Characters/player.png</code> -
+<code>noexport=true</code> makes it so the layer does not get exported
+automatically (i.e. it does not get saved as a png when the .kra file is
+saved)</p>
+<h2 id="usefullness">Usefullness</h2>
+<p>When making art for Godot, you usually draw a bunch of stuff on
+different layers, and you usually wanna save each layer individually.
+This plugin will do this automatically, every time you save, thus saving
+you time. All you need to do is ensure your image has a layer called
+“godot”.</p>
