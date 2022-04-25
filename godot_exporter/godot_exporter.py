@@ -87,9 +87,13 @@ def onImageSaved(filename):
         # get options in godot layer
         godot_layer_options = getOptionsFromLayerName(godot_layer.name())
         nofolder = False
+        nocrop = False
         if ("nofolder" in godot_layer_options) and (godot_layer_options["nofolder"] == "true"):
             log.write("nofolder option detected in godot layer\n")
             nofolder = True
+        if ("nocrop" in godot_layer_options) and (godot_layer_options["nocrop"] == "true"):
+            log.write("nocrop option detected in godot layer\n")
+            nocrop = True
 
         # generate images from layers
 
@@ -130,7 +134,10 @@ def onImageSaved(filename):
                     infoObj.setProperty('interlaced',False)
                     infoObj.setProperty('saveSRGBProfile',True)
                     infoObj.setProperty('transparencyFillcolor',[255,255,255])
-                    layer.save(filename,1,1,infoObj)
+                    if nocrop:
+                        layer.save(filename,1,1,infoObj,document.bounds())
+                    else:
+                        layer.save(filename,1,1,infoObj)
     
     Krita.instance().setBatchmode(False)
 

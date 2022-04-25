@@ -14,6 +14,7 @@ The following options are currently supported in the layer names at this time:
 - `nofolder=true` put this option in the layer named "godot" if you want the layers to be saved in the same folder as the saved .kra file instead of in their own dedicated sub-folder. This option only has an affect if it is put in the layer named "godot".
 - `path=<path>` specifies the folder to save the layer to. Path is relative to the godot project folder that encompasses the saved .kra file.
     - example: a layer name of `player {path=Scenes/Characters}`, will make the layer save to `<GodotProject>/Scenes/Characters/player.png`
+- `nocrop=true` put this option in layer named "godot" to prevent layers from being cropped before being saved
 
 
 ## Usefullness
